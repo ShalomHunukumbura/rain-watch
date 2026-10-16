@@ -5,108 +5,315 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Rain watch: is it unusually wet in your district?</title>
 <meta name="description" content="Rainfall in the last 7 days for every district in Sri Lanka, compared with the same week in every year since 2015, plus the 3-day forecast. Updated every morning.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet">
 <style>
   :root {
     color-scheme: light;
-    --page: #f9f9f7; --surface: #fcfcfb;
-    --text: #0b0b0b; --text-2: #52514e; --muted: #898781;
-    --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,0.10);
-    --series-1: #2a78d6;
-    --wet-2: #256abf; --wet-1: #86b6ef; --neutral: #f0efec; --dry-1: #e34948;
+    --page: #eef5fb; --surface: #ffffff; --sunken: #e9f2fa; --wash: #d6e8f7;
+    --text: #0f1f33; --text-2: #46586e; --muted: #55677e;
+    --grid: #e1eaf3; --axis: #b6c6d8; --border: rgba(15,45,85,0.08); --border-strong: rgba(15,45,85,0.16);
+    --brand: #0369a1; --ink: #0c3a5e; --on-ink: #ffffff;
+    --series-1: #2a78d6; --series-1-soft: #aecbee;
+    --wet-2: #256abf; --wet-1: #86b6ef; --neutral: #cdd7e3; --dry-1: #e34948;
     --warning: #fab219;
+    --shadow: 0 1px 2px rgba(15,45,85,0.05), 0 10px 30px rgba(15,45,85,0.06);
+    --radius: 16px; --radius-sm: 10px;
+    --serif: "Newsreader", Georgia, "Times New Roman", serif;
+    --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       color-scheme: dark;
-      --page: #0d0d0d; --surface: #1a1a19;
-      --text: #f0efec; --text-2: #c3c2b7; --muted: #898781;
-      --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
-      --series-1: #3987e5;
-      --wet-2: #3987e5; --wet-1: #1c5cab; --neutral: #383835; --dry-1: #e66767;
+      --page: #07111f; --surface: #0d1a2c; --sunken: #13233a; --wash: #0f2a4a;
+      --text: #e7eef7; --text-2: #a8b9cc; --muted: #8295ad;
+      --grid: #1a2b42; --axis: #2d4262; --border: rgba(150,190,240,0.09); --border-strong: rgba(150,190,240,0.18);
+      --brand: #5fb0ec; --ink: #d7e8f7; --on-ink: #07111f;
+      --series-1: #3987e5; --series-1-soft: #1f4675;
+      --wet-2: #3987e5; --wet-1: #1c5cab; --neutral: #334861; --dry-1: #e66767;
+      --shadow: 0 1px 2px rgba(0,0,0,0.35);
     }
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--page); color: var(--text);
-         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
-  main { max-width: 1000px; margin: 0 auto; padding: 32px 20px 64px; }
-  h1 { font-size: 28px; line-height: 1.2; margin: 0 0 6px; }
-  h2 { font-size: 18px; margin: 0 0 4px; }
-  p { margin: 0 0 12px; }
-  a { color: inherit; }
-  .lede { color: var(--text-2); margin-bottom: 20px; }
-  .sub { color: var(--text-2); font-size: 14px; margin-bottom: 14px; }
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
-          padding: 20px; margin-bottom: 20px; }
-  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 20px; }
-  .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; }
-  .tile .value { font-size: 30px; font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; }
-  .tile .label { color: var(--text-2); font-size: 14px; }
-  .table-wrap { overflow-x: auto; }
-  table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
-  th, td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
-  th { color: var(--text-2); font-weight: 600; cursor: pointer; user-select: none; }
-  th[aria-sort] { color: var(--text); }
-  th.left, td.left { text-align: left; }
-  tbody tr { cursor: pointer; }
-  tbody tr:hover, tbody tr[aria-selected=true] { background: var(--neutral); }
-  .badge { display: inline-flex; align-items: center; gap: 6px; }
-  .swatch { width: 12px; height: 12px; border-radius: 3px; border: 1px solid var(--border); flex: none; }
-  .warn { display: inline-flex; gap: 4px; align-items: center; }
-  .warn .icon { color: var(--text); background: var(--warning); border-radius: 3px; padding: 0 4px; font-size: 12px; }
-  .spark { display: inline-flex; align-items: flex-end; gap: 2px; height: 22px; vertical-align: middle; }
-  .spark span { width: 6px; background: var(--series-1); border-radius: 2px 2px 0 0; min-height: 1px; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--page) linear-gradient(180deg, var(--wash) 0, var(--page) 560px) no-repeat; color: var(--text);
+         font: 16px/1.55 var(--sans); font-feature-settings: "cv11", "ss01"; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-decoration-color: var(--axis); text-underline-offset: 3px; }
+  a:hover { text-decoration-color: currentColor; }
+  :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 6px; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+  @media (min-width: 640px) { .wrap { padding: 0 32px; } }
+  .num { font-variant-numeric: tabular-nums; }
   .muted { color: var(--muted); }
-  .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; color: var(--text-2); margin-bottom: 12px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+  /* Top bar */
+  .bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 0; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: -0.01em; text-decoration: none; }
+  .brand svg { width: 22px; height: 22px; color: var(--brand); }
+  .updated { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2);
+             background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 5px 12px; }
+  .updated[hidden] { display: none; }
+  .updated .dot { width: 7px; height: 7px; border-radius: 50%; background: #1baf7a; box-shadow: 0 0 0 3px color-mix(in srgb, #1baf7a 20%, transparent); }
+
+  /* Hero */
+  .hero { padding: 40px 0 32px; }
+  .eyebrow { font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--brand); margin: 0 0 14px; }
+  h1 { font: 400 clamp(34px, 6vw, 58px)/1.06 var(--serif); letter-spacing: -0.02em; margin: 0 0 18px; max-width: 18ch; text-wrap: balance; }
+  .lede { font-size: 17px; color: var(--text-2); max-width: 60ch; margin: 0; text-wrap: pretty; }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(2, 1fr); background: var(--surface);
+           border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 28px; overflow: hidden; }
+  @media (min-width: 760px) { .stats { grid-template-columns: repeat(4, 1fr); } }
+  .stat { padding: 20px 22px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .stat:nth-child(2n) { border-right: 0; }
+  .stat:nth-child(n+3) { border-bottom: 0; }
+  @media (min-width: 760px) { .stat, .stat:nth-child(2n) { border-bottom: 0; border-right: 1px solid var(--border); } .stat:last-child { border-right: 0; } }
+  .stat .value { font: 400 40px/1 var(--serif); letter-spacing: -0.02em; margin-bottom: 10px; }
+  .stat .label { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-2); line-height: 1.35; }
+  .stat.zero .value { color: var(--muted); }
+
+  /* Cards */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+          box-shadow: var(--shadow); padding: 24px 20px; margin-bottom: 28px; }
+  @media (min-width: 640px) { .card { padding: 28px 32px; } }
+  .card-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+  h2 { font: 400 28px/1.15 var(--serif); letter-spacing: -0.015em; margin: 0 0 6px; }
+  h3 { font-size: 15px; font-weight: 600; margin: 0 0 6px; }
+  .sub { color: var(--text-2); font-size: 14px; margin: 0; }
+
+  /* Filters and controls */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { font: 500 14px/1 var(--sans); color: var(--text-2); background: transparent; border: 1px solid var(--border-strong);
+          border-radius: 999px; padding: 0 14px; min-height: 36px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+          transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease; }
+  .chip:hover { color: var(--text); border-color: var(--axis); }
+  .chip[aria-pressed=true] { background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
+  .chip .count { font-variant-numeric: tabular-nums; opacity: 0.65; }
+  .chip:disabled { opacity: 0.4; cursor: default; }
+  .field { display: inline-flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-2); }
+  select { font: 500 14px var(--sans); color: var(--text); background: var(--surface); border: 1px solid var(--border-strong);
+           border-radius: var(--radius-sm); min-height: 40px; padding: 0 36px 0 14px; cursor: pointer; appearance: none;
+           background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2355677e' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+           background-repeat: no-repeat; background-position: right 12px center; }
+  .mobile-sort { display: none; margin-bottom: 4px; }
+
+  /* Level badges */
+  .swatch { width: 10px; height: 10px; border-radius: 3px; flex: none; display: inline-block; }
+  .level { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 500; white-space: nowrap;
+           border-radius: 999px; padding: 4px 11px 4px 9px; background: var(--sunken); color: var(--text); }
+  .level .mark { font-size: 10px; letter-spacing: -1px; color: var(--text-2); }
+  .warn { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; margin-top: 6px; }
+  .warn svg { width: 15px; height: 15px; flex: none; }
+
+  /* Table */
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { text-align: right; padding: 12px 10px; border-bottom: 1px solid var(--grid); white-space: nowrap; vertical-align: middle; }
+  th:first-child, td:first-child { padding-left: 12px; }
+  th:last-child, td:last-child { padding-right: 12px; }
+  thead th { font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0.02em; border-bottom-color: var(--border-strong); padding-top: 0; }
+  th.sortable { cursor: pointer; user-select: none; }
+  th.sortable:hover, th[aria-sort] { color: var(--text); }
+  th .arrow { display: inline-block; width: 12px; text-align: center; }
+  th.left, td.left { text-align: left; }
+  tbody tr { cursor: pointer; transition: background-color 140ms ease; }
+  tbody tr:hover { background: color-mix(in srgb, var(--sunken) 60%, transparent); }
+  tbody tr[aria-selected=true] { background: var(--sunken); }
+  tbody tr[aria-selected=true] td:first-child { box-shadow: inset 3px 0 0 var(--brand); }
+  tbody tr:last-child td { border-bottom: 0; }
+  .name { font-weight: 500; }
+  .province { font-size: 12px; color: var(--muted); }
+  .total { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .spark { display: block; margin-left: auto; }
+  .pct { display: inline-flex; align-items: center; gap: 10px; font-variant-numeric: tabular-nums; }
+  .track { position: relative; width: 64px; height: 4px; border-radius: 4px; background: var(--grid); }
+  .track i { position: absolute; top: 50%; width: 8px; height: 8px; border-radius: 50%; transform: translate(-50%, -50%);
+             border: 2px solid var(--surface); box-sizing: content-box; }
+  .forecast { font-variant-numeric: tabular-nums; color: var(--text-2); }
+  .forecast span + span::before { content: "·"; color: var(--axis); margin: 0 6px; }
+  .empty { padding: 32px 0; text-align: center; color: var(--muted); }
+
+  @media (max-width: 759px) {
+    .mobile-sort { display: flex; }
+    thead { display: none; }
+    table, tbody { display: block; }
+    tbody tr { display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; padding: 14px 4px; border-bottom: 1px solid var(--grid); }
+    tbody tr:last-child { border-bottom: 0; }
+    tbody tr[aria-selected=true] { border-radius: var(--radius-sm); padding-left: 12px; padding-right: 12px; }
+    tbody td, tbody td:first-child, tbody td:last-child { display: block; padding: 0; border: 0; text-align: left; white-space: normal; }
+    tbody tr[aria-selected=true] td:first-child { box-shadow: none; }
+    td[data-col=total] { text-align: right; }
+    td[data-col=spark], td[data-col=normal] { display: none; }
+    td[data-col=pct] { grid-column: 2; grid-row: 2; text-align: right; color: var(--text-2); font-size: 13px; align-self: center; }
+    td[data-col=pct] .pct::after { content: "drier weeks"; color: var(--muted); }
+    td[data-col=level] { grid-column: 1; grid-row: 2; }
+    td[data-col=forecast] { grid-column: 1 / -1; font-size: 13px; }
+    td[data-col=forecast]::before { content: "Next 3 days, mm  "; color: var(--muted); white-space: pre; }
+    td[data-col=total]::after { content: " mm"; font-weight: 400; color: var(--muted); font-size: 13px; }
+    .pct .track { display: none; }
+    .name-cell { margin-left: -8px; }
+  }
+
+  /* Watching */
+  .watch { margin-bottom: 28px; }
+  .watch-empty { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; background: color-mix(in srgb, var(--surface) 70%, transparent);
+                 border: 1px dashed var(--border-strong); border-radius: var(--radius); padding: 16px 20px; }
+  .watch-empty > svg { width: 20px; height: 20px; color: var(--brand); flex: none; }
+  .watch-empty p { margin: 0; flex: 1 1 260px; color: var(--text-2); font-size: 15px; }
+  .watch-empty p strong { color: var(--text); font-weight: 600; }
+  .watch-form { display: flex; gap: 8px; flex-wrap: wrap; }
+  .watch-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .watch-head h2 { margin: 0; }
+  .watch-head .hint { font-size: 13px; color: var(--muted); margin: 2px 0 0; }
+  .watch-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+  .wcard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow);
+           padding: 20px 22px; display: flex; flex-direction: column; gap: 14px; }
+  .wcard-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .wcard h3 { font: 400 26px/1.1 var(--serif); letter-spacing: -0.01em; margin: 0 0 2px; }
+  .wcard-mid { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+  .wcard .big { font: 400 42px/1 var(--serif); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .wcard .big small { font: 400 15px var(--sans); color: var(--muted); margin-left: 4px; letter-spacing: 0; }
+  .wcard .meta { font-size: 13px; color: var(--muted); margin-top: 6px; white-space: nowrap; }
+  .wcard .sentence { margin: 0; font-size: 14px; color: var(--text-2); }
+  .wcard-foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 12px;
+                border-top: 1px solid var(--grid); padding-top: 14px; font-size: 13px; color: var(--text-2); }
+  .wcard-foot .forecast { color: var(--text); }
+  .wcard-foot .warn { margin-top: 0; }
+  .btn { font: 500 14px/1 var(--sans); min-height: 40px; padding: 0 16px; border-radius: 999px; cursor: pointer;
+         border: 1px solid var(--ink); background: var(--ink); color: var(--on-ink); display: inline-flex; align-items: center; gap: 8px;
+         transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease; }
+  .btn:hover { opacity: 0.92; }
+  .btn.ghost { background: transparent; color: var(--text); border-color: var(--border-strong); }
+  .btn.ghost:hover { border-color: var(--axis); opacity: 1; }
+  .btn.small { min-height: 36px; padding: 0 12px; font-size: 13px; }
+  .btn svg { width: 16px; height: 16px; flex: none; }
+  .btn[aria-pressed=true] { color: var(--brand); border-color: color-mix(in srgb, var(--brand) 45%, transparent); }
+  .btn[aria-pressed=true] svg, .star[aria-pressed=true] svg { fill: currentColor; }
+  .star { width: 36px; height: 36px; border: 0; background: transparent; color: var(--axis); border-radius: 50%; padding: 0;
+          display: inline-grid; place-items: center; cursor: pointer; flex: none; transition: background-color 140ms ease, color 140ms ease; }
+  .star:hover { background: var(--sunken); color: var(--text-2); }
+  .star[aria-pressed=true] { color: var(--brand); }
+  .star svg { width: 18px; height: 18px; }
+  .wcard .star { margin: -6px -10px 0 0; }
+  .name-cell { display: flex; align-items: center; gap: 4px; margin-left: -10px; }
+  .chart-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+
+  /* Chart */
+  .chart-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px; align-items: flex-end; margin-bottom: 20px; }
+  .facts { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 14px 0 0; }
+  .facts div { display: flex; flex-direction: column; }
+  .facts dt { font-size: 12px; color: var(--muted); order: 2; }
+  .facts dd { margin: 0; font: 400 24px/1.2 var(--serif); font-variant-numeric: tabular-nums; }
   .chart { position: relative; }
-  svg { display: block; width: 100%; height: auto; overflow: visible; }
-  .tick { fill: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
-  .tooltip { position: absolute; top: 0; pointer-events: none; background: var(--surface);
-             border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 13px;
-             box-shadow: 0 4px 16px rgba(0,0,0,0.12); white-space: nowrap; }
-  select { font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--axis); border-radius: 6px; padding: 6px 10px; }
-  :focus-visible { outline: 2px solid var(--series-1); outline-offset: 2px; }
-  ul { margin: 0 0 12px; padding-left: 20px; }
+  svg.plot { display: block; width: 100%; height: auto; overflow: visible; }
+  .tick { fill: var(--muted); font: 12px var(--sans); font-variant-numeric: tabular-nums; }
+  .band-label { fill: var(--text-2); font: 500 12px var(--sans); }
+  .tooltip { position: absolute; top: 0; pointer-events: none; background: var(--ink); color: var(--on-ink);
+             border-radius: 8px; padding: 6px 10px; font-size: 13px; white-space: nowrap; box-shadow: 0 6px 20px rgba(0,0,0,0.18); }
+  .tooltip strong { font-weight: 600; }
+
+  /* Explainer */
+  .defs { display: grid; gap: 22px 40px; margin: 8px 0 28px; }
+  @media (min-width: 760px) { .defs { grid-template-columns: 1fr 1fr; } }
+  .defs p { margin: 0; color: var(--text-2); font-size: 15px; }
+  .note { display: flex; gap: 14px; align-items: flex-start; background: var(--sunken); border-radius: var(--radius-sm); padding: 16px 18px; font-size: 15px; }
+  .note svg { width: 20px; height: 20px; flex: none; margin-top: 2px; color: var(--text-2); }
+  .note p { margin: 0; }
+  .note p + p { margin-top: 6px; color: var(--text-2); }
+  footer { padding: 4px 0 56px; font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; }
+  footer p { margin: 0; max-width: 70ch; }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
 <body>
-<main>
-  <h1>Rain watch</h1>
-  <p class="lede">Is it unusually wet, or unusually dry, in your district? Rain in the last 7 days for all 25 districts of Sri Lanka, compared with the same week in every year since 2015, and the next 3 days of forecast. Updated every morning.</p>
+<div class="wrap">
+  <header class="bar">
+    <a class="brand" href="./">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg>
+      Rain watch
+    </a>
+    <span class="updated" id="updated" hidden><span class="dot" aria-hidden="true"></span><span></span></span>
+  </header>
 
-  <div class="tiles" id="tiles"></div>
+  <main>
+    <section class="hero">
+      <p class="eyebrow" id="eyebrow">Sri Lanka · 25 districts</p>
+      <h1 id="headline">Is it unusually wet in your district?</h1>
+      <p class="lede">Rain in the last 7 days for every district, compared with the same week in every year since 2015, with the next 3 days of forecast. Updated every morning.</p>
+    </section>
 
-  <section class="card" aria-labelledby="table-h">
-    <h2 id="table-h">Every district</h2>
-    <p class="sub" id="table-sub"></p>
-    <div class="legend" id="legend"></div>
-    <div class="table-wrap"><table id="table"></table></div>
-  </section>
+    <section class="watch" id="watch" aria-labelledby="watch-h"></section>
 
-  <section class="card" aria-labelledby="chart-h">
-    <h2 id="chart-h">Daily rain, last 90 days</h2>
-    <p class="sub"><label>District <select id="district"></select></label> &nbsp;or click a row above.</p>
-    <div class="chart" id="chart"></div>
-  </section>
+    <div class="stats" id="stats" aria-label="Summary"></div>
 
-  <section class="card">
-    <h2>How to read this</h2>
-    <ul>
-      <li><strong>Last 7 days</strong> is the rain that fell in the 7 days to the date at the top, at the district's main town.</li>
-      <li><strong>Normal</strong> is the middle value for the same week of the year (give or take a week) in every year from 2015.</li>
-      <li><strong>Wetter than</strong> is the share of those past weeks that were drier. 97% means only 3 in 100 comparable weeks were wetter.</li>
-      <li><strong>Much wetter than normal</strong> means wetter than 95% of past weeks and at least 50 mm. <strong>Wetter</strong> means wetter than 80% and at least 25 mm. <strong>Much drier</strong> means drier than 95% of past weeks, at a time of year that is usually wet.</li>
-      <li><strong>Heavy rain likely</strong> means a forecast of 100 mm or more on one of the next 3 days, and <strong>fairly heavy</strong> 75 mm or more, the Department of Meteorology's wording.</li>
-    </ul>
-    <p><strong>This is not an official warning.</strong> One point per district stands for the whole district, and rainfall here comes from weather models, not rain gauges. For warnings, follow the <a href="https://www.meteo.gov.lk/">Department of Meteorology</a> and the <a href="https://www.dmc.gov.lk/">Disaster Management Centre</a>.</p>
-    <p class="sub">Weather data by <a href="https://open-meteo.com/">Open-Meteo.com</a>, licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>, based on ERA5 reanalysis (Copernicus Climate Change Service) and national weather service forecasts.</p>
-  </section>
-</main>
+    <section class="card" aria-labelledby="table-h">
+      <div class="card-head">
+        <div>
+          <h2 id="table-h">Every district</h2>
+          <p class="sub" id="table-sub"></p>
+        </div>
+        <div class="chips" id="filters" role="group" aria-label="Show"></div>
+      </div>
+      <label class="field mobile-sort">Sort by
+        <select id="sort-select">
+          <option value="percentile">Most unusual</option>
+          <option value="total_7d">Most rain</option>
+          <option value="forecast_max_mm">Most rain forecast</option>
+          <option value="district">Name</option>
+        </select>
+      </label>
+      <table id="table"></table>
+    </section>
+
+    <section class="card" aria-labelledby="chart-h">
+      <div class="chart-head">
+        <div>
+          <p class="eyebrow" style="margin-bottom:8px">Daily rain, last 90 days</p>
+          <h2 id="chart-h">–</h2>
+          <dl class="facts" id="facts"></dl>
+        </div>
+        <div class="chart-tools">
+          <label class="field">District <select id="district"></select></label>
+          <button type="button" class="btn ghost" id="chart-watch" aria-pressed="false"></button>
+        </div>
+      </div>
+      <div class="chart" id="chart"></div>
+    </section>
+
+    <section class="card" aria-labelledby="how-h">
+      <h2 id="how-h">How to read this</h2>
+      <div class="defs">
+        <div><h3>Last 7 days</h3><p>The rain that fell in the 7 days to the date at the top, at the district's main town.</p></div>
+        <div><h3>Normal</h3><p>The middle value for the same week of the year (give or take a week) in every year from 2015.</p></div>
+        <div><h3>Wetter than</h3><p>The share of those past weeks that were drier. 97% means only 3 in 100 comparable weeks were wetter.</p></div>
+        <div><h3>Levels</h3><p><strong>Much wetter</strong>: wetter than 95% of past weeks and at least 50 mm. <strong>Wetter</strong>: wetter than 80% and at least 25 mm. <strong>Much drier</strong>: drier than 95% of past weeks, at a time of year that is usually wet.</p></div>
+        <div><h3>Forecast</h3><p><strong>Heavy rain likely</strong> means 100 mm or more forecast on one of the next 3 days, and <strong>fairly heavy</strong> 75 mm or more, the Department of Meteorology's wording.</p></div>
+      </div>
+      <div class="note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        <div>
+          <p><strong>This is not an official warning.</strong> For warnings, follow the <a href="https://www.meteo.gov.lk/">Department of Meteorology</a> and the <a href="https://www.dmc.gov.lk/">Disaster Management Centre</a>.</p>
+          <p>One point per district stands for the whole district, and rainfall here comes from weather models, not rain gauges.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Weather data by <a href="https://open-meteo.com/">Open-Meteo.com</a>, licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>, based on ERA5 reanalysis (Copernicus Climate Change Service) and national weather service forecasts.</p>
+    <p id="generated"></p>
+  </footer>
+</div>
 
 <script>
 const $ = (id) => document.getElementById(id);
-const day = (iso) => new Date(iso + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
-const short = (iso) => new Date(iso + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
-const weekday = (iso) => new Date(iso + 'T00:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', timeZone: 'UTC' });
+const fmt = (iso, opts) => new Date(iso + 'T00:00:00Z').toLocaleDateString('en-GB', { ...opts, timeZone: 'UTC' });
+const day = (iso) => fmt(iso, { day: 'numeric', month: 'short', year: 'numeric' });
+const short = (iso) => fmt(iso, { day: 'numeric', month: 'short' });
+const weekday = (iso) => fmt(iso, { weekday: 'short' });
 const mm = (v) => v == null ? '–' : `${v.toFixed(v < 10 ? 1 : 0)}`;
 const NS = 'http://www.w3.org/2000/svg';
 function el(name, attrs = {}, parent) {
@@ -115,50 +322,198 @@ function el(name, attrs = {}, parent) {
   if (parent) parent.appendChild(n);
   return n;
 }
+const listing = (names) => names.length < 3 ? names.join(' and ') : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`;
 
-// Levels in order from driest to wettest; the arrows carry the meaning without colour.
+// Levels from driest to wettest; the arrows carry the meaning without colour.
 const LEVELS = {
-  'Much drier than normal': { color: 'var(--dry-1)', mark: '▼', order: 0 },
-  'Normal': { color: 'var(--neutral)', mark: '–', order: 1 },
-  'Wetter than normal': { color: 'var(--wet-1)', mark: '▲', order: 2 },
-  'Much wetter than normal': { color: 'var(--wet-2)', mark: '▲▲', order: 3 },
-  'Not enough history': { color: 'transparent', mark: '?', order: -1 },
+  'Much drier than normal': { color: 'var(--dry-1)', mark: '▼', order: 0, short: 'Much drier' },
+  'Normal': { color: 'var(--neutral)', mark: '', order: 1, short: 'Normal' },
+  'Wetter than normal': { color: 'var(--wet-1)', mark: '▲', order: 2, short: 'Wetter' },
+  'Much wetter than normal': { color: 'var(--wet-2)', mark: '▲▲', order: 3, short: 'Much wetter' },
+  'Not enough history': { color: 'transparent', mark: '?', order: -1, short: 'Not enough history' },
 };
-const badge = (level) => {
-  const l = LEVELS[level] || LEVELS['Not enough history'];
-  return `<span class="badge"><span class="swatch" style="background:${l.color}"></span>${l.mark} ${level}</span>`;
+const levelOf = (name) => LEVELS[name] || LEVELS['Not enough history'];
+const swatch = (name) => `<span class="swatch" style="background:${levelOf(name).color}"></span>`;
+const badge = (name) => {
+  const l = levelOf(name);
+  return `<span class="level">${swatch(name)}${l.short}${l.mark ? `<span class="mark" aria-hidden="true">${l.mark}</span>` : ''}</span>`;
 };
-const forecastBadge = (level) => level.startsWith('Heavy') || level.startsWith('Fairly')
-  ? `<span class="warn"><span class="icon" aria-hidden="true">⚠</span>${level}</span>`
-  : `<span class="muted">${level}</span>`;
+const heavy = (d) => d.forecast_level !== 'No heavy rain' && d.forecast_level !== 'No forecast';
+const WARN_ICON = `<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" fill="var(--warning)"/><path d="M12 9v4M12 17h.01" stroke="#0b0b0b" stroke-width="2.2" stroke-linecap="round"/></svg>`;
 
-let latest, history, selected = null;
+const STAR = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+
+// The districts you watch are kept in this browser only. Storage can be missing or blocked, so every use is guarded.
+const STORE = 'rain-watch:watching';
+const readWatching = () => { try { const v = JSON.parse(localStorage.getItem(STORE)); return Array.isArray(v) ? v : []; } catch { return []; } };
+const saveWatching = () => { try { localStorage.setItem(STORE, JSON.stringify(watching)); } catch { /* not saved, still works for this visit */ } };
+let watching = readWatching();
+const isWatched = (name) => watching.includes(name);
+
+let latest, history, selected = null, filter = 'all';
 let sort = { key: 'percentile', dir: -1 };
 
+const FILTERS = [
+  ['all', 'All', () => true],
+  ['wetter', 'Wetter', (d) => levelOf(d.level).order >= 2],
+  ['drier', 'Drier', (d) => d.level === 'Much drier than normal'],
+  ['heavy', 'Heavy rain forecast', heavy],
+  ['watching', 'Watching', (d) => isWatched(d.district)],
+];
+
+function headline(ds) {
+  const names = (level) => ds.filter((d) => d.level === level).map((d) => d.district);
+  const much = names('Much wetter than normal'), wetter = names('Wetter than normal'), drier = names('Much drier than normal');
+  const storm = ds.filter(heavy).map((d) => d.district);
+  if (storm.length) return storm.length <= 2 ? `Heavy rain is forecast in ${listing(storm)}.` : `Heavy rain is forecast in ${storm.length} districts.`;
+  if (much.length) return much.length <= 2 ? `${listing(much)} ${much.length === 1 ? 'is' : 'are'} much wetter than normal.` : `${much.length} districts are much wetter than normal.`;
+  if (wetter.length) return `${wetter.length} district${wetter.length === 1 ? ' is' : 's are'} wetter than normal.`;
+  if (drier.length) return `${drier.length} district${drier.length === 1 ? ' is' : 's are'} much drier than normal.`;
+  return 'Rain is close to normal across the island.';
+}
+
 async function load() {
-  [latest, history] = await Promise.all(['latest', 'history'].map((f) => fetch(`data/${f}.json`).then((r) => r.json())));
+  [latest, history] = await Promise.all(['latest', 'history'].map((f) => fetch(`data/${f}.json`).then((r) => {
+    if (!r.ok) throw new Error(`${f}.json: ${r.status}`);
+    return r.json();
+  })));
   const ds = latest.districts;
   const count = (fn) => ds.filter(fn).length;
-  const tiles = [
-    [count((d) => d.level === 'Much wetter than normal'), 'much wetter than normal'],
-    [count((d) => d.level === 'Wetter than normal'), 'wetter than normal'],
-    [count((d) => d.level === 'Much drier than normal'), 'much drier than normal'],
-    [count((d) => d.forecast_level !== 'No heavy rain' && d.forecast_level !== 'No forecast'), 'with heavy rain in the forecast'],
+
+  const up = $('updated');
+  up.lastElementChild.textContent = `Rain to ${day(latest.date)}`;
+  up.hidden = false;
+  $('eyebrow').textContent = `Sri Lanka · ${ds.length} districts · 7 days to ${short(latest.date)}`;
+  $('headline').textContent = headline(ds);
+  if (latest.generated_at) $('generated').textContent = `Generated ${new Date(latest.generated_at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Colombo' })}, Colombo time`;
+
+  const stats = [
+    [count((d) => d.level === 'Much wetter than normal'), 'much wetter than normal', swatch('Much wetter than normal')],
+    [count((d) => d.level === 'Wetter than normal'), 'wetter than normal', swatch('Wetter than normal')],
+    [count((d) => d.level === 'Much drier than normal'), 'much drier than normal', swatch('Much drier than normal')],
+    [count(heavy), 'with heavy rain forecast', WARN_ICON],
   ];
-  $('tiles').innerHTML = tiles.map(([n, label]) =>
-    `<div class="tile"><div class="value">${n}</div><div class="label">district${n === 1 ? '' : 's'} ${label}</div></div>`).join('');
-  $('table-sub').textContent = `Rain in the 7 days to ${day(latest.date)}. Forecast for ${latest.forecast_days.map(short).join(', ')}. Click a column to sort.`;
-  $('legend').innerHTML = ['Much drier than normal', 'Normal', 'Wetter than normal', 'Much wetter than normal'].map(badge).join('');
+  $('stats').innerHTML = stats.map(([n, label, icon]) =>
+    `<div class="stat${n ? '' : ' zero'}"><div class="value num">${n}</div><div class="label">${icon}<span>district${n === 1 ? '' : 's'} ${label}</span></div></div>`).join('');
+
+  $('table-sub').textContent = `7 days to ${day(latest.date)} · forecast ${short(latest.forecast_days[0])} to ${short(latest.forecast_days.at(-1))}`;
+
+  $('filters').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-filter]');
+    if (!b) return;
+    filter = b.dataset.filter;
+    renderFilters();
+    renderTable();
+  });
+  watching = watching.filter((name) => ds.some((d) => d.district === name));
+  $('chart-watch').addEventListener('click', () => toggleWatch(selected));
+  renderFilters();
+  renderWatch();
+  $('sort-select').addEventListener('change', (e) => {
+    const key = e.target.value;
+    sort = { key, dir: key === 'district' ? 1 : -1 };
+    renderTable();
+  });
+
   const select = $('district');
   for (const d of [...ds].sort((a, b) => a.district.localeCompare(b.district))) {
     const o = document.createElement('option'); o.value = o.textContent = d.district; select.appendChild(o);
   }
-  select.addEventListener('change', () => { selected = select.value; renderTable(); renderChart(); });
-  selected = [...ds].sort((a, b) => (b.percentile ?? -1) - (a.percentile ?? -1))[0].district;
+  select.addEventListener('change', () => choose(select.value, false));
+  const asked = new URLSearchParams(location.search).get('district');
+  selected = ds.some((d) => d.district === asked) ? asked
+    : watching[0] ?? [...ds].sort((a, b) => (b.percentile ?? -1) - (a.percentile ?? -1))[0].district;
   select.value = selected;
-  window.addEventListener('resize', renderChart);
+  let width = 0;
+  new ResizeObserver(([e]) => {
+    const w = Math.round(e.contentRect.width);
+    if (w !== width) { width = w; renderChart(); }
+  }).observe($('chart'));
+  renderTable();
+}
+
+function choose(district, scroll) {
+  selected = district;
+  $('district').value = district;
   renderTable();
   renderChart();
+  try { window.history.replaceState(null, '', `?district=${encodeURIComponent(district)}`); } catch { /* not allowed here */ }
+  if (scroll) $('chart-h').closest('section').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+}
+
+function renderFilters() {
+  if (filter === 'watching' && !watching.length) filter = 'all';
+  $('filters').innerHTML = FILTERS.map(([key, label, fn]) => {
+    const n = latest.districts.filter(fn).length;
+    return `<button type="button" class="chip" data-filter="${key}" aria-pressed="${key === filter}"${n || key === 'all' ? '' : ' disabled'}>${label}<span class="count">${n}</span></button>`;
+  }).join('');
+}
+
+function toggleWatch(name) {
+  watching = isWatched(name) ? watching.filter((x) => x !== name) : [...watching, name];
+  saveWatching();
+  renderFilters();
+  renderWatch();
+  renderTable();
+  renderWatchButton();
+}
+
+const starButton = (name) => `<button type="button" class="star" data-watch="${name}" aria-pressed="${isWatched(name)}" aria-label="${isWatched(name) ? 'Stop watching' : 'Watch'} ${name}" title="${isWatched(name) ? 'Stop watching' : 'Watch'} ${name}">${STAR}</button>`;
+
+function districtOptions(placeholder) {
+  const left = latest.districts.filter((d) => !isWatched(d.district)).map((d) => d.district).sort();
+  return `<option value="">${placeholder}</option>` + left.map((n) => `<option>${n}</option>`).join('');
+}
+
+function renderWatch() {
+  const box = $('watch');
+  const ds = watching.map((name) => latest.districts.find((d) => d.district === name));
+  if (!ds.length) {
+    box.innerHTML = `<div class="watch-empty">${STAR}
+      <p><strong id="watch-h">Watch your district.</strong> It will show here first every time you open this page. Saved in this browser only.</p>
+      <div class="watch-form"><label class="field"><span class="sr-only">District</span><select id="watch-add" aria-label="District to watch">${districtOptions('Choose a district')}</select></label></div>
+    </div>`;
+  } else {
+    const max = Math.max(...ds.flatMap((d) => d.last_7_days.filter((v) => v != null)), 1);
+    const cards = ds.map((d) => {
+      const pct = d.percentile == null ? 'Not enough history to compare yet.'
+        : `Wetter than ${Math.round(d.percentile * 100)}% of the same week in past years.`;
+      return `<article class="wcard">
+        <div class="wcard-top">
+          <div><h3>${d.district}</h3><div class="province">${d.province} Province</div></div>
+          ${starButton(d.district)}
+        </div>
+        <div>${badge(d.level)}</div>
+        <div class="wcard-mid">
+          <div><div class="big">${mm(d.total_7d)}<small>mm</small></div><div class="meta">last 7 days · normal ${mm(d.normal_7d)} mm</div></div>
+          ${spark(d.last_7_days, max, 112, 40)}
+        </div>
+        <p class="sentence">${pct}</p>
+        <div class="wcard-foot">
+          <span>Next 3 days <span class="forecast">${d.forecast_mm.map((v) => `<span>${mm(v)}</span>`).join('')}</span> mm</span>
+          ${heavy(d) ? `<span class="warn">${WARN_ICON}${d.forecast_level}</span>` : ''}
+          <button type="button" class="btn ghost small" data-chart="${d.district}">Daily chart</button>
+        </div>
+      </article>`;
+    }).join('');
+    box.innerHTML = `<div class="watch-head">
+        <div><h2 id="watch-h">Watching</h2><p class="hint">Saved in this browser only.</p></div>
+        <select id="watch-add" aria-label="Add a district to watch">${districtOptions('Add a district')}</select>
+      </div>
+      <div class="watch-grid">${cards}</div>`;
+  }
+  const add = $('watch-add');
+  if (add.options.length < 2) add.hidden = true;
+  add.addEventListener('change', () => { if (add.value) toggleWatch(add.value); });
+  box.querySelectorAll('[data-watch]').forEach((b) => b.addEventListener('click', () => toggleWatch(b.dataset.watch)));
+  box.querySelectorAll('[data-chart]').forEach((b) => b.addEventListener('click', () => choose(b.dataset.chart, true)));
+}
+
+function renderWatchButton() {
+  const b = $('chart-watch'), on = isWatched(selected);
+  b.setAttribute('aria-pressed', on);
+  b.innerHTML = `${STAR}${on ? 'Watching' : 'Watch'}`;
+  b.setAttribute('aria-label', `${on ? 'Stop watching' : 'Watch'} ${selected}`);
 }
 
 const COLUMNS = [
@@ -171,13 +526,21 @@ const COLUMNS = [
   ['forecast_max_mm', 'Next 3 days, mm', 'left'],
 ];
 
-function value(d, key) {
-  if (key === 'level') return (LEVELS[d.level] || {}).order ?? -1;
-  return d[key];
+const value = (d, key) => key === 'level' ? levelOf(d.level).order : d[key];
+
+// Seven bars on one shared scale, so a tall bar means a lot of rain in any row.
+function spark(values, max, w = 70, h = 24) {
+  const bw = w / values.length * 0.72, gap = (w - bw * values.length) / (values.length - 1);
+  const bars = values.map((v, i) => {
+    const bh = Math.max(1.5, (v || 0) / max * h);
+    return `<rect x="${(i * (bw + gap)).toFixed(1)}" y="${(h - bh).toFixed(1)}" width="${bw.toFixed(1)}" height="${bh.toFixed(1)}" rx="1.5" fill="var(--series-1)"/>`;
+  }).join('');
+  return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="Daily: ${values.map(mm).join(', ')} mm">${bars}</svg>`;
 }
 
 function renderTable() {
-  const rows = [...latest.districts].sort((a, b) => {
+  const keep = FILTERS.find(([k]) => k === filter)[2];
+  const rows = latest.districts.filter(keep).sort((a, b) => {
     const x = value(a, sort.key), y = value(b, sort.key);
     if (x == null) return 1;
     if (y == null) return -1;
@@ -185,83 +548,115 @@ function renderTable() {
   });
   const table = $('table');
   const head = COLUMNS.map(([key, label, align]) => {
+    const sortable = key !== 'spark';
     const sorted = sort.key === key ? ` aria-sort="${sort.dir > 0 ? 'ascending' : 'descending'}"` : '';
-    return `<th class="${align || ''}" data-key="${key}"${sorted} tabindex="0">${label}${sorted ? (sort.dir > 0 ? ' ↑' : ' ↓') : ''}</th>`;
+    const arrow = `<span class="arrow" aria-hidden="true">${sorted ? (sort.dir > 0 ? '↑' : '↓') : ''}</span>`;
+    return `<th scope="col" class="${align || ''}${sortable ? ' sortable' : ''}" data-key="${key}"${sorted}${sortable ? ' tabindex="0"' : ''}>${align ? label + ' ' + arrow : arrow + label}</th>`;
   }).join('');
   const max = Math.max(...latest.districts.flatMap((d) => d.last_7_days.filter((v) => v != null)), 1);
   const body = rows.map((d) => {
-    const spark = `<span class="spark" aria-label="${d.last_7_days.map(mm).join(', ')} mm">${d.last_7_days.map((v) => `<span style="height:${Math.max(1, (v || 0) / max * 22)}px" title="${mm(v)} mm"></span>`).join('')}</span>`;
-    return `<tr data-district="${d.district}" aria-selected="${d.district === selected}">
-      <td class="left">${d.district}<div class="muted" style="font-size:12px">${d.province}</div></td>
-      <td>${mm(d.total_7d)}</td><td>${spark}</td><td>${mm(d.normal_7d)}</td>
-      <td>${d.percentile == null ? '–' : Math.round(d.percentile * 100) + '%'}</td>
-      <td class="left">${badge(d.level)}</td>
-      <td class="left">${d.forecast_mm.map(mm).join(' · ')}${d.forecast_level === 'No heavy rain' ? '' : '<br>' + forecastBadge(d.forecast_level)}</td></tr>`;
+    const l = levelOf(d.level);
+    const pct = d.percentile == null ? '–' : `<span class="pct"><span class="track" aria-hidden="true"><i style="left:${d.percentile * 100}%;background:${l.order === 1 ? 'var(--axis)' : l.color}"></i></span>${Math.round(d.percentile * 100)}%</span>`;
+    return `<tr data-district="${d.district}" aria-selected="${d.district === selected}" tabindex="0">
+      <td class="left" data-col="name"><div class="name-cell">${starButton(d.district)}<div><div class="name">${d.district}</div><div class="province">${d.province}</div></div></div></td>
+      <td data-col="total" class="total">${mm(d.total_7d)}</td>
+      <td data-col="spark">${spark(d.last_7_days, max)}</td>
+      <td data-col="normal" class="num muted">${mm(d.normal_7d)}</td>
+      <td data-col="pct">${pct}</td>
+      <td class="left" data-col="level">${badge(d.level)}</td>
+      <td class="left" data-col="forecast"><span class="forecast">${d.forecast_mm.map((v) => `<span>${mm(v)}</span>`).join('')}</span>${heavy(d) ? `<div class="warn">${WARN_ICON}${d.forecast_level}</div>` : ''}</td></tr>`;
   }).join('');
-  table.innerHTML = `<thead><tr>${head}</tr></thead><tbody>${body}</tbody>`;
-  table.querySelectorAll('th').forEach((th) => {
+  table.innerHTML = `<thead><tr>${head}</tr></thead><tbody>${body || `<tr><td class="empty" colspan="${COLUMNS.length}">No districts match.</td></tr>`}</tbody>`;
+  const sortSelect = $('sort-select');
+  if ([...sortSelect.options].some((o) => o.value === sort.key)) sortSelect.value = sort.key;
+  table.querySelectorAll('th.sortable').forEach((th) => {
     const go = () => {
       const key = th.dataset.key;
-      if (key === 'spark') return;
       sort = { key, dir: sort.key === key ? -sort.dir : (key === 'district' ? 1 : -1) };
       renderTable();
+      table.querySelector(`th[data-key="${key}"]`).focus();
     };
     th.addEventListener('click', go);
-    th.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+    th.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
   });
-  table.querySelectorAll('tbody tr').forEach((tr) => tr.addEventListener('click', () => {
-    selected = tr.dataset.district; $('district').value = selected; renderTable(); renderChart();
+  table.querySelectorAll('tbody [data-watch]').forEach((b) => b.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleWatch(b.dataset.watch);
+    table.querySelector(`[data-watch="${b.dataset.watch}"]`)?.focus();
   }));
+  table.querySelectorAll('tbody tr[data-district]').forEach((tr) => {
+    tr.addEventListener('click', () => choose(tr.dataset.district, true));
+    tr.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target === tr) choose(tr.dataset.district, true); });
+  });
 }
 
-// One series of daily bars: one colour, no legend; the title and the select name it.
+// One series of daily bars. The last 7 days, the window the table compares, are full colour; earlier days are a tint.
 function renderChart() {
+  const d = latest.districts.find((x) => x.district === selected);
+  $('chart-h').textContent = selected;
+  renderWatchButton();
+  $('facts').innerHTML = [
+    [`${mm(d.total_7d)} mm`, 'last 7 days'],
+    [`${mm(d.normal_7d)} mm`, 'normal for the week'],
+    [d.percentile == null ? '–' : `${Math.round(d.percentile * 100)}%`, 'of past weeks were drier'],
+  ].map(([v, k]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+
   const container = $('chart');
   container.innerHTML = '';
   const values = history.districts[selected] || [];
   const dates = history.dates;
   const width = container.clientWidth || 800;
-  const height = Math.round(Math.min(300, Math.max(200, width * 0.32)));
-  const m = { top: 10, right: 8, bottom: 24, left: 52 };
+  const height = Math.round(Math.min(320, Math.max(220, width * 0.32)));
+  const m = { top: 36, right: 4, bottom: 28, left: 44 };
   const raw = Math.max(...values.filter((v) => v != null), 1);
   const step = raw <= 20 ? 5 : raw <= 50 ? 10 : raw <= 100 ? 25 : raw <= 200 ? 50 : 100;
   const max = Math.ceil(raw / step) * step;
   const band = (width - m.left - m.right) / dates.length;
   const y = (v) => height - m.bottom - (v / max) * (height - m.top - m.bottom);
-  const svg = el('svg', { viewBox: `0 0 ${width} ${height}`, role: 'img', 'aria-label': `Daily rain in ${selected}, last ${dates.length} days` }, container);
+  const svg = el('svg', { class: 'plot', viewBox: `0 0 ${width} ${height}`, role: 'img', 'aria-label': `Daily rain in ${selected}, last ${dates.length} days, up to ${raw.toFixed(0)} mm in a day` }, container);
+  const recent = dates.length - 7;
+  const bx = m.left + recent * band;
+  el('rect', { x: bx, y: m.top - 8, width: width - m.right - bx, height: y(0) - m.top + 8, fill: 'var(--sunken)', rx: 6 }, svg);
+  el('text', { x: (bx + width - m.right) / 2, y: m.top - 16, 'text-anchor': 'middle', class: 'band-label' }, svg).textContent = 'Last 7 days';
   for (let v = 0; v <= max; v += step) {
-    el('line', { x1: m.left, x2: width - m.right, y1: y(v), y2: y(v), stroke: v === 0 ? 'var(--axis)' : 'var(--grid)' }, svg);
-    el('text', { x: m.left - 6, y: y(v) + 4, 'text-anchor': 'end', class: 'tick' }, svg).textContent = v === max ? `${v} mm` : `${v}`;
+    el('line', { x1: m.left, x2: width - m.right, y1: y(v), y2: y(v), stroke: v === 0 ? 'var(--axis)' : 'var(--grid)', 'stroke-dasharray': v === 0 ? 'none' : '2 4' }, svg);
+    el('text', { x: m.left - 10, y: y(v) + 4, 'text-anchor': 'end', class: 'tick' }, svg).textContent = v === max ? `${v} mm` : `${v}`;
   }
-  dates.forEach((d, i) => {
-    if (d.endsWith('-01') || i === 0) el('text', { x: m.left + i * band, y: height - 6, class: 'tick' }, svg).textContent = short(d);
+  dates.forEach((dt, i) => {
+    if (dt.endsWith('-01')) {
+      el('line', { x1: m.left + i * band, x2: m.left + i * band, y1: y(0), y2: y(0) + 5, stroke: 'var(--axis)' }, svg);
+      el('text', { x: m.left + i * band + 4, y: height - 6, class: 'tick' }, svg).textContent = fmt(dt, { month: 'long' });
+    }
   });
+
   const tooltip = document.createElement('div');
   tooltip.className = 'tooltip'; tooltip.hidden = true;
   container.appendChild(tooltip);
-  const gap = band > 4 ? 1 : 0;  // a surface gap between adjacent bars
+  const gap = band > 5 ? 1 : 0.5;
   values.forEach((v, i) => {
     const x = m.left + i * band;
     if (v != null && v > 0) {
-      const h = height - m.bottom - y(v), w = Math.max(band - gap * 2, 1), r = Math.min(2, w / 2, h);
+      const h = y(0) - y(v), w = Math.max(band - gap * 2, 1), r = Math.min(2.5, w / 2, h);
       el('path', {
         d: `M${x + gap},${y(0)} v${-(h - r)} a${r},${r} 0 0 1 ${r},${-r} h${w - 2 * r} a${r},${r} 0 0 1 ${r},${r} v${h - r} z`,
-        fill: 'var(--series-1)',
+        fill: i >= recent ? 'var(--series-1)' : 'var(--series-1-soft)',
       }, svg);
     }
-    const hit = el('rect', { x, y: m.top, width: band, height: height - m.top - m.bottom, fill: 'transparent' }, svg);
+    const hit = el('rect', { x, y: m.top, width: band, height: y(0) - m.top, fill: 'transparent' }, svg);
     hit.addEventListener('mouseenter', () => {
-      tooltip.textContent = `${weekday(dates[i])} ${day(dates[i])}: ${mm(v)} mm`;
+      tooltip.innerHTML = `${weekday(dates[i])} ${day(dates[i])} · <strong>${mm(v)} mm</strong>`;
       tooltip.hidden = false;
       const left = x + band + 8 + tooltip.offsetWidth > width ? x - 8 - tooltip.offsetWidth : x + band + 8;
       tooltip.style.left = Math.max(0, left) + 'px';
+      tooltip.style.top = Math.max(0, y(v || 0) - 36) + 'px';
     });
     hit.addEventListener('mouseleave', () => { tooltip.hidden = true; });
   });
 }
 
 load().catch((err) => {
-  document.querySelector('main').insertAdjacentHTML('afterbegin', `<p class="card">Could not load the data: ${err.message}</p>`);
+  $('headline').textContent = 'The data could not be loaded.';
+  document.querySelector('.lede').textContent = err.message;
 });
 </script>
 </body>
