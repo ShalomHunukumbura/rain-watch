@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+dist/
+*.tmp
+
+# Secrets and local settings
+.env
+
+# Airflow writes logs into the container; nothing to keep here.
+logs/
+
+# The explainer stays local.
+explain.md
+explain.pdf

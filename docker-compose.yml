@@ -1,0 +1,77 @@
+# Three containers: Airflow (one process runs the scheduler, the web UI and the workers),
+# Postgres for Airflow's own records, and SeaweedFS as an S3-compatible data lake.
+x-lake-env: &lake-env
+  RAIN_WATCH_BUCKET: rain-watch
+  RAIN_WATCH_S3_ENDPOINT: seaweedfs:8333
+  RAIN_WATCH_S3_KEY_ID: ${RAIN_WATCH_S3_KEY_ID:-rainwatch}
+  RAIN_WATCH_S3_SECRET: ${RAIN_WATCH_S3_SECRET:-rainwatch-secret}
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - airflow-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 5s
+      retries: 10
+    restart: unless-stopped
+
+  seaweedfs:
+    image: chrislusf/seaweedfs:latest
+    # One process for the whole store, with the S3 interface on port 8333.
+    command: >
+      server -dir=/data -s3 -s3.port=8333 -s3.config=/etc/seaweedfs/s3.json
+      -master.volumeSizeLimitMB=128 -volume.max=50
+    entrypoint: >
+      /bin/sh -c 'mkdir -p /etc/seaweedfs && printf "%s" "{\"identities\":[{\"name\":\"rainwatch\",\"credentials\":[{\"accessKey\":\"$$KEY\",\"secretKey\":\"$$SECRET\"}],\"actions\":[\"Admin\",\"Read\",\"Write\",\"List\",\"Tagging\"]}]}" > /etc/seaweedfs/s3.json && exec /entrypoint.sh "$$@"' --
+    environment:
+      KEY: ${RAIN_WATCH_S3_KEY_ID:-rainwatch}
+      SECRET: ${RAIN_WATCH_S3_SECRET:-rainwatch-secret}
+    volumes:
+      - lake:/data
+    ports:
+      - "127.0.0.1:8333:8333"
+    restart: unless-stopped
+
+  airflow:
+    build: .
+    user: "${AIRFLOW_UID:-50000}:0"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      seaweedfs:
+        condition: service_started
+    environment:
+      <<: *lake-env
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__DEFAULT_TIMEZONE: Asia/Colombo
+      # A laptop: at most four tasks at once.
+      AIRFLOW__CORE__PARALLELISM: "4"
+      # Local only, so no login screen. Never expose port 8080 to a network like this.
+      AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS: "true"
+      # Our code, mounted from the folder, so edits apply without rebuilding the image.
+      PYTHONPATH: /opt/rain-watch/src
+      RAIN_WATCH_SITE_DIR: /opt/airflow/site/data
+      RAIN_WATCH_NTFY_TOPIC: ${RAIN_WATCH_NTFY_TOPIC:-}
+    command: >
+      bash -c "airflow db migrate
+      && airflow pools set open_meteo 1 'One Open-Meteo request at a time'
+      && exec airflow standalone"
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./src:/opt/rain-watch/src
+      - ./site:/opt/airflow/site
+    ports:
+      - "127.0.0.1:8080:8080"
+    restart: unless-stopped
+
+volumes:
+  airflow-db:
+  lake:
